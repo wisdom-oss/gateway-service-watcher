@@ -133,7 +133,11 @@ func main() {
 				_, err = global.KongClient.Upstreams.Get(ctx, &gatewayConfig.UpstreamName)
 				if kong.IsNotFoundErr(err) {
 					log.Warn().Msg("upstream not found. creating new one")
-					continue
+					upstream, err := global.KongClient.Upstreams.Create(ctx, &kong.Upstream{Name: &gatewayConfig.UpstreamName})
+					if err != nil {
+						log.Err(err).Msg("unable to create new upstream for service.")
+					}
+					log.Info().Str("upstreamID", *upstream.ID).Str("upstreamName", *upstream.Name).Msg("created new upstream")
 				}
 				if err != nil {
 					log.Error().Err(err).Msg("an error occurred while getting the upstream from the gateway")
