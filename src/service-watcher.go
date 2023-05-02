@@ -10,8 +10,6 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/kong/go-kong/kong"
 	"github.com/rs/zerolog/log"
-	"github.com/titanous/json5"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -70,39 +68,16 @@ func main() {
 				// now get the hostname of the container and request the information point on port 8000
 				hostname := containerInformation.Config.Hostname
 				containerUrl := fmt.Sprintf("http://%s:8000", hostname)
-				configUrl := fmt.Sprintf("%s/_gatewayConfig", containerUrl)
-				configResponse, err := http.Get(configUrl)
-				if err != nil {
-					log.Error().Err(err).Msg("unable to get the config response from the service. looking for labels")
-					if !utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.name") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.upstream-name") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.enable-healthchecks") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.path") {
-						log.Warn().Msg("labels for manual configuration are missing. skipping container")
-						continue
-					}
-				}
-				if configResponse.StatusCode != 200 {
-					log.Warn().Msg("unable to get the config response from the service. looking for labels")
-					if !utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.name") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.upstream-name") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.enable-healthchecks") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.path") {
-						log.Warn().Msg("labels for manual configuration are missing. skipping container")
-						continue
-					}
-				}
+
 				// now parse the service configuration
 				var gatewayConfig structs.GatewayConfiguration
-				err = json5.NewDecoder(configResponse.Body).Decode(&gatewayConfig)
-
 				if err != nil {
-					log.Warn().Err(err).Msg("unable to parse the config response from the service. looking for labels")
+					log.Warn().Err(err).Msg("looking for labels on container")
 					if !utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.name") ||
 						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.upstream-name") ||
 						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.enable-healthchecks") ||
 						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.path") {
-						log.Warn().Msg("labels for manual configuration are missing. skipping container")
+						log.Warn().Msg("labels missing for complete configuration. skipping container")
 						continue
 					}
 				}
@@ -204,7 +179,13 @@ func main() {
 				}
 				if !routeConfigured {
 					log.Warn().Msg("no route found matching the service id and the desired path. creating new route")
-					// todo: implement
+					_, err := global.KongClient.Routes.Create(ctx, &kong.Route{
+						Paths:   []*string{&gatewayConfig.ServicePath},
+						Service: service,
+					})
+					if err != nil {
+						log.Error().Err(err).Msg("unable to create new route. skipping container")
+					}
 				}
 
 			}
