@@ -18,13 +18,10 @@ which may be overwritten by using the following labels on the container:
 * Service Name &rarr; `wisdom-oss.service.name` (accepts string)
 * Access Path &rarr; `wisdom-oss.service.path` (accepts string)
 * Upstream Name &rarr; `wisdom-oss.service.upstream-name` (accepts string)
-* Healthcheck &rarr; `wisdom-oss.service.enable-healthchecks` (accepts bool)
 
 ## Usage
 This tool connects to the docker daemon under `/var/run/docker.sock` and looks 
-up all the containers labeled with `wisdom-oss.isService=true`. It then queries
-the information endpoint of a container `/_info` and/or uses the values from the
-other labels to register the service at the Kong API Gateway. The API Gateway
+up all the containers labeled with `wisdom-oss.isService=true`. The API Gateway
 needs to be labelled with `wisdom-oss.isGateway=true` to be found by this
 service. Important: The service watcher only supports one API Gateway at the
 same time. Therefore, only one container should be labeled as the gateway.

@@ -75,7 +75,6 @@ func main() {
 					log.Warn().Err(err).Msg("looking for labels on container")
 					if !utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.name") ||
 						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.upstream-name") ||
-						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.enable-healthchecks") ||
 						!utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.path") {
 						log.Warn().Msg("labels missing for complete configuration. skipping container")
 						continue
@@ -90,14 +89,6 @@ func main() {
 				if utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.upstream-name") {
 					log.Warn().Msg("overriding upstream name from config response")
 					gatewayConfig.UpstreamName = containerInformation.Config.Labels["wisdom-oss.service.upstream-name"]
-				}
-				if utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.enable-healthchecks") {
-					log.Warn().Msg("overriding healthcheck value from config response")
-					gatewayConfig.EnableHealthchecks, err = strconv.ParseBool(containerInformation.Config.Labels["wisdom-oss.service.enable-healthchecks"])
-					if err != nil {
-						log.Warn().Msg("unable to convert label value to bool. using default value of `true`")
-						gatewayConfig.EnableHealthchecks = true
-					}
 				}
 				if utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.path") {
 					log.Warn().Msg("overriding service path from config response")
