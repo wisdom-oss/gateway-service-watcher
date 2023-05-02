@@ -1,0 +1,24 @@
+/* This file specifies which environment variables are consumed by the
+microservice. Furthermore, a default value may be set for the environment
+variable if it is optional. */
+{
+  "required": [
+    "API_GATEWAY_HOST"
+  ],
+  "optional": [
+    {
+      "key": "API_GATEWAY_PORT",
+      "default": "8001"
+    },
+    {
+      "key": "ERROR_FILE_LOCATION",
+      "default": "/res/errors.json5"
+    },
+    {
+      "key": "DOCKER_HOST",
+      "default": "/var/run/docker.sock"
+    }
+  ],
+
+
+}
