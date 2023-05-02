@@ -41,14 +41,8 @@ services:
     build: https://github.com/wisdom-oss/gateway-service-watcher.git
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-
-  # A service which uses the inbuilt info path to allow the setup
-  autoService:
-    image: thisisamicroservice:latest
-    labels:
-      wisdom-oss.isService: true
   
-  # A service which uses only the lables to be configured  
+  # A service which uses the labels to be configured  
   manualService:
     image: thisisanothermicroserivce:latest
     labels:
@@ -56,5 +50,4 @@ services:
       wisdom-oss.service.name: someName
       wisdom-oss.service.path: /somePath
       wisdom-oss.service.upstream-name: someUpstream
-      wisdom-oss.service.healthcheck: false
 ```
