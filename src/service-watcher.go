@@ -69,8 +69,9 @@ func main() {
 
 				// now get the hostname of the container and request the information point on port 8000
 				hostname := containerInformation.Config.Hostname
-				containerUrl := fmt.Sprintf("http://%s:8000/_gatewayConfig", hostname)
-				configResponse, err := http.Get(containerUrl)
+				containerUrl := fmt.Sprintf("http://%s:8000", hostname)
+				configUrl := fmt.Sprintf("%s/_gatewayConfig", containerUrl)
+				configResponse, err := http.Get(configUrl)
 				if err != nil {
 					log.Error().Err(err).Msg("unable to get the config response from the service. looking for labels")
 					if !utils.MapHasKey(containerInformation.Config.Labels, "wisdom-oss.service.name") ||
