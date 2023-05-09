@@ -40,8 +40,8 @@ func main() {
 		_, err := global.KongClient.Plugins.Create(ctx, &kong.Plugin{
 			Name: kong.String("kong-internal-db-auth"),
 			Config: kong.Configuration{
-				"introspection_url": global.Environment["INTROSPECTION_URL"],
-				"auth_header":       "ignore",
+				"intospection_url": global.Environment["INTROSPECTION_URL"],
+				"auth_header":      "ignore",
 			},
 			Enabled: kong.Bool(true),
 		})
