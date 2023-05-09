@@ -26,6 +26,30 @@ func main() {
 	serviceContainerFilter := filters.NewArgs()
 	serviceContainerFilter.Add("label", "wisdom-oss.isService")
 
+	// check if the authorization plugin is enabled
+	plugins, _ := global.KongClient.Plugins.ListAll(ctx)
+	authEnabled := false
+	for _, plugin := range plugins {
+		if plugin.Name == kong.String("kong-internal-db-auth") {
+			authEnabled = true
+			break
+		}
+	}
+
+	if !authEnabled {
+		_, err := global.KongClient.Plugins.Create(ctx, &kong.Plugin{
+			Name: kong.String("kong-internal-db-auth"),
+			Config: kong.Configuration{
+				"introspection_url": global.Environment["INTROSPECTION_URL"],
+				"auth_header":       "ignore",
+			},
+			Enabled: kong.Bool(true),
+		})
+		if err != nil {
+			log.Warn().Err(err).Msg("unable to enable global authentication. services may be unprotected")
+		}
+	}
+
 	for {
 		select {
 		case <-ticker.C:

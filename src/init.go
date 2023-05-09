@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gateway-service-watcher/src/global"
+	"gateway-service-watcher/src/structs"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -12,6 +13,7 @@ import (
 	"github.com/rs/zerolog/diode"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
+	"github.com/titanous/json5"
 	"os"
 	"strings"
 	"time"
@@ -72,6 +74,74 @@ func init() {
 		log.Warn().Str("initStep", "configure-logger").Msg("configured global logger with default level `info`")
 		break
 	}
+}
+
+func init() {
+	l := log.With().Str("initStep", "load-environment").Logger()
+	// check if the environment variables set a different location for the config
+	// file
+	l.Info().Msg("loading environment configuration")
+	envFileLocation, envSet := os.LookupEnv("ENVIRONMENT_CONFIGURATION")
+	var filePath string
+	if envSet {
+		filePath = envFileLocation
+	} else {
+		filePath = "/res/environment.json5"
+	}
+	var environmentConfiguration structs.EnvironmentConfiguration
+	configurationContent, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Fatal().Err(err).Msg("unable to read environment configuration")
+	}
+	err = json5.Unmarshal(configurationContent, &environmentConfiguration)
+	if err != nil {
+		log.Fatal().Err(err).Msg("unable to unmarshal the environment configuration")
+	}
+	l.Info().Msg("successfully parsed environment configuration")
+	l.Info().Msg("loading required environment variables")
+	// now iterate through the required environment variables
+	for _, key := range environmentConfiguration.RequiredEnvironmentVariables {
+		l.Debug().Str("env", key).Msg("reading required environment variable")
+		value, isSet := os.LookupEnv(key)
+		if !isSet {
+			// since the key was not found look for a docker secret containing the value
+			fileKey := key + "_FILE"
+			value, isSet := os.LookupEnv(fileKey)
+			if !isSet {
+				l.Fatal().Msgf(
+					"the environment variable '%s' is required but not set and no file present", key)
+			} else {
+				l.Debug().Str("env", key).Msg("found value for environment variable in docker secret")
+				// read the file
+				fileContent, err := os.ReadFile(value)
+				if err != nil {
+					l.Fatal().Err(err).Msgf("unable to read file '%s'", value)
+				}
+				global.Environment[key] = string(fileContent)
+			}
+
+		} else {
+			l.Debug().Str("env", key).Msg("found value for environment variable")
+			global.Environment[key] = value
+		}
+	}
+	l.Info().Msg("successfully loaded required environment variables")
+
+	// now iterate through the optional environment variables
+	for _, optionalEnvironmentVariable := range environmentConfiguration.OptionalEnvironmentVariables {
+		l.Debug().Str("env", optionalEnvironmentVariable.EnvironmentKey).Msg("reading optional environment variable")
+		value, isSet := os.LookupEnv(optionalEnvironmentVariable.EnvironmentKey)
+		if !isSet {
+			l.Debug().Str("env", optionalEnvironmentVariable.EnvironmentKey).Msg("environment variable not found")
+			l.Info().Str("env", optionalEnvironmentVariable.EnvironmentKey).Msg("using default value")
+			global.Environment[optionalEnvironmentVariable.EnvironmentKey] = optionalEnvironmentVariable.DefaultValue
+		} else {
+			l.Debug().Str("env", optionalEnvironmentVariable.EnvironmentKey).Msg("found value for environment variable")
+			global.Environment[optionalEnvironmentVariable.EnvironmentKey] = value
+		}
+	}
+
+	l.Info().Msg("finished loading of the optional environment variables")
 }
 
 // Initialization: Connect to Docker API

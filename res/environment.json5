@@ -3,7 +3,7 @@ microservice. Furthermore, a default value may be set for the environment
 variable if it is optional. */
 {
   "required": [
-    "API_GATEWAY_HOST"
+    "API_GATEWAY_HOST", "INTROSPECTION_URL"
   ],
   "optional": [
     {
