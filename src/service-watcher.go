@@ -91,7 +91,7 @@ func main() {
 
 				// now get the hostname of the container and request the information point on port 8000
 				hostname := containerInformation.Config.Hostname
-				containerUrl := fmt.Sprintf("http://%s:8000", hostname)
+				containerUrl := fmt.Sprintf("%s:8000", hostname)
 
 				// now parse the service configuration
 				var gatewayConfig structs.GatewayConfiguration
