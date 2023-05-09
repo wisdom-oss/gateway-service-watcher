@@ -90,9 +90,9 @@ func main() {
 				// of it
 
 				// now get the hostname of the container and request the information point on port 8000
-				hostname := containerInformation.Config.Hostname
+				hostname := containerInformation.NetworkSettings.IPAddress
 				containerUrl := fmt.Sprintf("%s:8000", hostname)
-
+				log.Info().Str("containerUrl", containerUrl).Msg("constructed container reachability")
 				// now parse the service configuration
 				var gatewayConfig structs.GatewayConfiguration
 				if err != nil {
