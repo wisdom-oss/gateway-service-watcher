@@ -177,7 +177,7 @@ func init() {
 	}
 	log.Debug().Int("containerCount", len(gatewayContainers)).Msg("search finished")
 	if len(gatewayContainers) == 0 {
-		log.Fatal().Msg("no api gateway found")
+		log.Fatal().Msg("no running api gateway found")
 	}
 	if len(gatewayContainers) > 1 {
 		log.Fatal().Msg("multiple api gateways found. this is not supported")
