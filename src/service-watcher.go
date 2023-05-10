@@ -105,7 +105,20 @@ func main() {
 				gatewayConfig.ServicePath = containerInformation.Config.Labels["wisdom-oss.service.path"]
 
 				if containerInformation.State.Status == "running" {
-					utils.RegisterContainer(ctx, gatewayConfig, containerInformation)
+					// now check if healthchecks are available
+					if containerInformation.State.Health == nil {
+						log.Warn().Msg("registering service without enabled health checks")
+						utils.RegisterContainer(ctx, gatewayConfig, containerInformation)
+					} else {
+						log.Debug().Msg("determining container health for further action")
+						if containerInformation.State.Health.Status == "unhealthy" {
+							log.Warn().Msg("found unhealthy docker container. removing container from api gateway")
+							utils.RemoveContainer(ctx, gatewayConfig, containerInformation)
+						} else {
+							log.Info().Msg("container either starting or healthy. adding container to gateway")
+							utils.RegisterContainer(ctx, gatewayConfig, containerInformation)
+						}
+					}
 				} else {
 					utils.RemoveContainer(ctx, gatewayConfig, containerInformation)
 				}
