@@ -18,7 +18,8 @@ func RegisterContainer(ctx context.Context, config structs.GatewayConfiguration,
 	upstream, err := global.KongClient.Upstreams.Get(ctx, &config.UpstreamName)
 	if kong.IsNotFoundErr(err) {
 		log.Warn().Msg("upstream not found. creating new one")
-		upstream, err = global.KongClient.Upstreams.Create(ctx, &kong.Upstream{Name: &config.UpstreamName})
+		upstream, err = global.KongClient.Upstreams.Create(ctx, &kong.Upstream{Name: &config.UpstreamName,
+			Tags: []*string{kong.String("wisdom")}})
 		if err != nil {
 			log.Err(err).Msg("unable to create new upstream for service.")
 			return err
@@ -41,6 +42,7 @@ func RegisterContainer(ctx context.Context, config structs.GatewayConfiguration,
 		log.Warn().Msg("container not listed in desired upstream. adding container to upstream targets")
 		target, err := global.KongClient.Targets.Create(ctx, upstream.ID, &kong.Target{
 			Target: kong.String(targetAddress),
+			Tags:   []*string{kong.String("wisdom")},
 		})
 		if err != nil {
 			log.Err(err).Msg("unable to create new upstream target. skipping container")
@@ -56,6 +58,7 @@ func RegisterContainer(ctx context.Context, config structs.GatewayConfiguration,
 		service, err = global.KongClient.Services.Create(ctx, &kong.Service{
 			Host: upstream.Name,
 			Name: &config.ServiceName,
+			Tags: []*string{kong.String("wisdom")},
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("unable to create new service in gateway. skipping container")
@@ -82,16 +85,23 @@ func RegisterContainer(ctx context.Context, config structs.GatewayConfiguration,
 	routes, err := global.KongClient.Routes.ListAll(ctx)
 	routeConfigured := false
 	for _, route := range routes {
-		if ArrayContains(route.Paths, &config.ServicePath) &&
-			route.Service.ID == service.ID {
+		var paths []string
+		for _, path := range route.Paths {
+			paths = append(paths, *path)
+		}
+		if ArrayContains(paths, config.ServicePath) {
 			routeConfigured = true
+			break
 		}
 	}
 	if !routeConfigured {
 		log.Warn().Msg("no route found matching the service id and the desired path. creating new route")
 		_, err := global.KongClient.Routes.Create(ctx, &kong.Route{
-			Paths:   []*string{&config.ServicePath},
-			Service: service,
+			Paths:             []*string{&config.ServicePath},
+			Service:           service,
+			Tags:              []*string{kong.String("wisdom")},
+			ResponseBuffering: kong.Bool(false),
+			RequestBuffering:  kong.Bool(false),
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("unable to create new route. skipping container")
@@ -105,9 +115,12 @@ func RemoveContainer(ctx context.Context, config structs.GatewayConfiguration, c
 	log := ctx.Value("logger").(zerolog.Logger)
 	log.Info().Msg("removing not running container from the configured upstream")
 	targetAddress := fmt.Sprintf("%s:8000", container.Config.Hostname)
-	log.Info().Str("host", targetAddress).Msg("built target address")
+	log.Debug().Str("host", targetAddress).Msg("built target address")
 	// now get all targets from the kong client
 	targets, err := global.KongClient.Targets.ListAll(ctx, &config.UpstreamName)
+	if kong.IsNotFoundErr(err) {
+		log.Warn().Msg("upstream not. cannot remove target from nonexistent upstream")
+	}
 	if err != nil {
 		log.Warn().Err(err).Msg("an error occurred while removing the container")
 		return err

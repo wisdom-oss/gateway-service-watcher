@@ -10,6 +10,7 @@ import (
 	"github.com/kong/go-kong/kong"
 	"github.com/rs/zerolog/log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -122,8 +123,43 @@ func main() {
 				} else {
 					utils.RemoveContainer(ctx, gatewayConfig, containerInformation)
 				}
-
 			}
+
+			// now make a reverse search for containers that may have been deleted by going through the
+			// different upstreams
+
+			containers, err := global.DockerClient.ContainerList(ctx, types.ContainerListOptions{All: true})
+			var containerHostNames []string
+			for _, container := range containers {
+				info, _ := global.DockerClient.ContainerInspect(ctx, container.ID)
+				containerHostNames = append(containerHostNames, info.Config.Hostname)
+			}
+			listOptions := &kong.ListOpt{
+				Tags: []*string{kong.String("wisdom")},
+			}
+			upstreams, _, err := global.KongClient.Upstreams.List(ctx, listOptions)
+			if err != nil {
+				log.Warn().Err(err).Msg("unable to get list of upstreams. skipping reverse search this time")
+			}
+			for _, upstream := range upstreams {
+				l := log.With().Str("upstream", *upstream.ID).Logger()
+				// get all targets from the upstream
+				targets, _, err := global.KongClient.Targets.List(ctx, upstream.ID, listOptions)
+				if err != nil {
+					l.Warn().Err(err).Msg("unable to get list of upstreams. skipping reverse search this time")
+				}
+				for _, target := range targets {
+					targetParts := strings.Split(*target.Target, ":")
+					hostname := targetParts[0]
+					if !utils.ArrayContains(containerHostNames, hostname) {
+						err := global.KongClient.Targets.Delete(ctx, upstream.ID, target.Target)
+						if err != nil {
+							log.Warn().Err(err).Msg("unable to remove deleted docker container")
+						}
+					}
+				}
+			}
+
 		}
 	}
 }
