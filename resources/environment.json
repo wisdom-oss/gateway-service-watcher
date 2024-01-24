@@ -1,0 +1,7 @@
+{
+  "required": [
+    "DOCKER_HOST"
+  ],
+  "optional": {
+  }
+}
