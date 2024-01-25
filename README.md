@@ -22,4 +22,4 @@ backend using the same information as used in the frontend.
 > [!CAUTION]
 > Changing the OpenID Connect configuration in the watchdog only will result
 > in a locked platform since the frontend is unable to receive the required
-> values dynamically. Remember to rebuild the frontend after changing the values
+> values dynamically. Remember to rebuild the frontend after changing the values.
