@@ -120,7 +120,7 @@ func connectDocker() {
 		if client.IsErrConnectionFailed(err) {
 			initLogger.Fatal().Err(err).Msg("connection to docker host failed")
 		}
-		log.Fatal().Err(err).Msg("unable to verify connection to docker host")
+		initLogger.Fatal().Err(err).Msg("unable to verify connection to docker host")
 	}
 	initLogger.Info().Str("dockerApiVersion", info.APIVersion).Str("dockerHostOs", info.OSType).Msg("connected to docker")
 }
@@ -149,10 +149,10 @@ func discoverAndConnectGateway() {
 	}
 	switch {
 	case len(containers) == 0:
-		log.Fatal().Msg("no gateway container found on this docker host")
+		initLogger.Fatal().Msg("no gateway container found on this docker host")
 		break
 	case len(containers) > 1:
-		log.Fatal().Msg("multiple gateway containers found on this docker host. unable to proceed")
+		initLogger.Fatal().Msg("multiple gateway containers found on this docker host. unable to proceed")
 		break
 	}
 	gatewayContainer := containers[0]
