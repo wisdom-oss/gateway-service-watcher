@@ -3,8 +3,8 @@
 <h1>Gateway Service Watchdog</h1>
 <h3>service-watchdog</h3>
 <p>👀 microservice provisioning and monitoring</p>
-<img src="https://img.shields.io/github/go-mod/go-version/wisdom-oss/gateway-service-watcher?style=for-the-badge"
-alt="Go Lang Version"/>
+<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/wisdom-oss/gateway-service-watcher/docker.yaml?style=for-the-badge&label=Docker%20Build">
+<img src="https://img.shields.io/github/go-mod/go-version/wisdom-oss/gateway-service-watcher?style=for-the-badge" alt="Go Lang Version"/>
 </div>
 
 > [!NOTE]
