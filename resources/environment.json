@@ -1,7 +1,7 @@
 {
   "required": [
-    "DOCKER_HOST"
   ],
   "optional": {
+    "DOCKER_HOST": "/var/run/docker.sock"
   }
 }
