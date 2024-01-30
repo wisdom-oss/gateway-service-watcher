@@ -1,4 +1,4 @@
-name: "CodeQL"
+name: "Code Quality/Security"
 on:
   pull_request:
     branches:
@@ -9,6 +9,22 @@ on:
     - cron: "0 3 * * *"
 
 jobs:
+  govuln:
+    name: Go-specifiy vulnerability check
+    runs-on: 'ubuntu-latest'
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - uses: Templum/govulncheck-action@v1.0.0
+        with:
+          go-version: latest
+
   analyze:
     name: Analyze
     runs-on: 'ubuntu-latest'
