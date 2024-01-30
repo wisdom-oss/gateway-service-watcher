@@ -38,6 +38,18 @@ These values are configured _as-is_ for the plugin instances.
 The only check that is done is that the values need to be present in the
 environment.
 
+Optionally the environment variable `SCAN_INTERVAL` can be set to change the
+default scanning interval from 1 minute to another interval.
+This environment variable accepts the following time units:
+- `ns`: Nanoseconds
+- `us`/`µs`: Microseconds
+- `ms`: Milliseconds
+- `s`: Seconds
+- `m`: Minutes
+- `h`: Hours
+
+The default value is `1m`
+
 ### Setting up containers
 To make a container discoverable you need to set some labels to the container in
 your docker compose files.

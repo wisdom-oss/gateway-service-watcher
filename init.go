@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -33,6 +34,16 @@ func init() {
 
 	configureLogger()
 	loadServiceConfiguration()
+
+	// before connecting to the docker host and gateway check if the scanning
+	// interval is valid or use the default value
+	globals.ScanningInterval, err = time.ParseDuration(globals.Environment["SCAN_INTERVAL"])
+	if err != nil {
+		// set the default value of 1 minute
+		initLogger.Warn().Err(err).Msg("unable to parse the configured scanning interval. using 1 minute.")
+		globals.ScanningInterval = time.Minute
+	}
+
 	connectDocker()
 	discoverAndConnectGateway()
 
