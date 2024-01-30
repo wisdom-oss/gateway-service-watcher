@@ -183,7 +183,7 @@ func main() {
 						log.Error().Err(err).Msg("unable to retrieve plugin list for service")
 					}
 					authConfigured := false
-					var plugin kong.Plugin
+					var plugin *kong.Plugin
 					for _, plugin = range plugins {
 						if plugin.Name == authPlugin.Name {
 							authConfigured = true
