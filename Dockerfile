@@ -1,15 +1,10 @@
-FROM golang:alpine AS build
-RUN mkdir -p /build/src
-RUN mkdir -p /build/out
-COPY src /build/src
-COPY go.mod /build/go.mod
-COPY go.sum /build/go.sum
-WORKDIR /build/src
-RUN go mod download
-RUN go build -o /build/out/service-watcher
+FROM golang:alpine AS build-service
+COPY . /tmp/src
+WORKDIR /tmp/src
+RUN mkdir -p /tmp/build && go mod download -x && go build -v -x -o /tmp/build/app
 
-FROM alpine:latest AS runlevel
-COPY --from=build /build/out/service-watcher /service-watcher
-COPY res /res
-WORKDIR /
-ENTRYPOINT ["/service-watcher"]
+FROM alpine:latest
+COPY --from=build-service /tmp/build/app /watchdog
+COPY resources/* /
+ENTRYPOINT ["/watchdog"]
+LABEL org.opencontainers.image.source=https://github.com/wisdom-oss/gateway-service-watcher

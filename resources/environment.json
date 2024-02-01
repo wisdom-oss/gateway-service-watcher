@@ -1,0 +1,10 @@
+{
+  "required": [
+    "OIDC_CLIENT_ID",
+    "OIDC_DISCOVERY_URL"
+  ],
+  "optional": {
+    "DOCKER_HOST": "/var/run/docker.sock",
+    "SCAN_INTERVAL": "60s"
+  }
+}
